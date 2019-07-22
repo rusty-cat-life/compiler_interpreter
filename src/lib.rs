@@ -337,36 +337,26 @@ fn parse_expr<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 fn parse_expr3<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError> 
     where Tokens: Iterator<Item = Token>,
     {
-        // EXPR2をパースする
-        let mut e = parse_expr2(tokens)?;
-        // EXPE3_Loop
-        loop {
-            match tokens.peek().map(|token| token.value) {
-                // ("+" | "-")
-                Some(TokenKind::Plus) | Some(TokenKind::Minus) => {
-                    let operator = match tokens.next().unwrap() {
-                        Token {
-                            value: TokenKind::Plus,
-                            loc,
-                        } => BinOp::add(loc),
-                        Token {
-                            value: TokenKind::Minus,
-                            loc,
-                        } => BinOp::sub(loc),
-                        // Peekで入力が"+"か"-"であることは確認したのでそれ以外はありえない
-                        _ => unreachable!(),
-                    };
+        fn parse_expr3_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
+            where 
+                Tokens: Iterator<Item = Token>,
+                {
+                    let operator = tokens.peek()
+                                         // イテレータの終わりは入力の終端なのでエラーを出す
+                                         .ok_or(ParseError::Eof)
+                                         // エラーを返すかもしれない値をつなげる
+                                         .and_then(|token| match token.value {
+                                             TokenKind::Plus => Ok(BinOp::add(token.loc.clone())),
+                                             TokenKind::Minus => Ok(BinOp::sub(token.loc.clone())),
+                                             _ => Err(ParseError::NotOperator(token.clone())),
+                                         })?;
 
-                    // EXPR2
-                    let r = parse_expr2(tokens)?;
-                    // 位置情報やAST構築の処理
-                    let loc = e.loc.merge(&r.loc);
+                    tokens.next();
 
-                    e = Ast::binop(operator, e, r, loc);
-                },
-                _ => return Ok(e)
-            }
-        }
+                    Ok(operator)
+                }
+
+        parse_left_binop(tokens, parse_expr2, parse_expr3_op)
     }
 
 fn parse_expr2<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError> 
