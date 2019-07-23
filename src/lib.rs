@@ -91,7 +91,7 @@ impl LexError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum AstKind {
+pub enum AstKind {
     /// 数値
     Num(u64),
     /// 単項演算
@@ -100,7 +100,7 @@ enum AstKind {
     BinOp { op: BinOp, l: Box<Ast>, r: Box<Ast> },
 }
 
-type Ast = Annot<AstKind>;
+pub type Ast = Annot<AstKind>;
 
 impl Ast {
     fn num(n: u64, loc: Loc) -> Self {
@@ -125,14 +125,14 @@ impl Ast {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum UniOpKind {
+pub enum UniOpKind {
     /// 正号
     Plus,
     /// 負号
     Minus,
 }
 
-type UniOp = Annot<UniOpKind>;
+pub type UniOp = Annot<UniOpKind>;
 
 impl UniOp {
     fn plus(loc: Loc) -> Self {
@@ -145,7 +145,7 @@ impl UniOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum BinOpKind {
+pub enum BinOpKind {
     /// 加算
     Add,
     /// 減算
@@ -156,7 +156,7 @@ enum BinOpKind {
     Div,
 }
 
-type BinOp = Annot<BinOpKind>;
+pub type BinOp = Annot<BinOpKind>;
 
 impl BinOp {
     fn add(loc: Loc) -> Self {
@@ -177,7 +177,7 @@ impl BinOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum ParseError {
+pub enum ParseError {
     /// 予期しないトークンが来た
     UnexpectedToken(Token),
     /// 式を期待していたのに式でないものが来た
@@ -317,7 +317,7 @@ fn test_lexer() {
     )
 }
 
-fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
+pub fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
     // 入力をイテレータにし、Peekableにする
     let mut tokens = tokens.into_iter().peekable();
     // その後parse_exprを呼んでエラー処理をする

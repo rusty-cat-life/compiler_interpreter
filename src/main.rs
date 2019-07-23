@@ -1,4 +1,4 @@
-use parser_2::lex;
+use parser_2::{lex, parse};
 use std::io;
 
 /// プロンプトを表示しユーザの入力を促す
@@ -21,8 +21,9 @@ fn main() {
         prompt("> ").unwrap();
 
         if let Some(Ok(line)) = lines.next() {
-            let token = lex(&line);
-            println!("{:?}", token);
+            let tokens = lex(&line).unwrap();
+            let ast = parse(tokens).unwrap();
+            println!("{:?}", ast);
         } else {
             break;
         }
