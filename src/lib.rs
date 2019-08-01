@@ -1,3 +1,5 @@
+use std::error::Error as StdError;
+use std::fmt;
 use std::iter::Peekable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -7,6 +9,12 @@ impl Loc {
     fn merge(&self, other: &Loc) -> Loc {
         use std::cmp::{max, min};
         Loc(min(self.0, other.0), max(self.1, other.1))
+    }
+}
+
+impl fmt::Display for Loc {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}-{}", self.0, self.1)
     }
 }
 
@@ -38,6 +46,22 @@ pub enum TokenKind {
     LParen,
     /// )
     RParen,
+}
+
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::TokenKind::*;
+
+        match self {
+            Number(n) => n.fmt(f),
+            Plus => write!(f, "+"),
+            Minus => write!(f, "-"),
+            Asterisk => write!(f, "*"),
+            Slash => write!(f, "/"),
+            LParen => write!(f, "("),
+            RParen => write!(f, ")"),
+        }
+    }
 }
 
 pub type Token = Annot<TokenKind>;
@@ -90,6 +114,21 @@ impl LexError {
     }
 }
 
+impl fmt::Display for LexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::LexErrorKind::*;
+
+        let loc = &self.loc;
+
+        match self.value {
+            InvalidChar(c) => write!(f, "{}: invalid char '{}'", loc, c),
+            Eof => write!(f, "End of file"),
+        }
+    }
+}
+
+impl StdError for LexError {}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AstKind {
     /// 数値
@@ -121,6 +160,17 @@ impl Ast {
             },
             loc,
         )
+    }
+}
+
+use std::str::FromStr;
+
+impl FromStr for Ast {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let tokens = lex(s)?;
+        let ast = parse(tokens)?;
+        Ok(ast)
     }
 }
 
@@ -177,6 +227,41 @@ impl BinOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Error {
+    Lexer(LexError),
+    Parser(ParseError),
+}
+
+impl From<LexError> for Error {
+    fn from(e: LexError) -> Self {
+        Error::Lexer(e)
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(e: ParseError) -> Self {
+        Error::Parser(e)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "parser error")
+    }
+}
+
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Lexer(lex) => Some(lex),
+            Parser(parse) => Some(parse),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     /// 予期しないトークンが来た
     UnexpectedToken(Token),
@@ -191,6 +276,25 @@ pub enum ParseError {
     /// パース途中で入力が終わった
     Eof,
 }
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ParseError::*;
+
+        match self {
+            UnexpectedToken(t) => write!(f, "{}: {} is not expected.", t.loc, t.value),
+            NotExpression(t) => write!(f, "{}: '{}' is not a start of expression", t.loc, t.value),
+            NotOperator(t) => write!(f, "{}: '{}' is not an operator", t.loc, t.value),
+            UnclosedOpenParen(t) => write!(f, "{}: '{}' is not closed", t.loc, t.value),
+            RedundantExpression(t) => {
+                write!(f, "{}: expression after '{}' is redundant", t.loc, t.value)
+            }
+            Eof => write!(f, "End of file"),
+        }
+    }
+}
+
+impl StdError for ParseError {}
 
 pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     let mut result = vec![];
@@ -428,7 +532,7 @@ where
             TokenKind::Number(n) => Ok(Ast::new(AstKind::Num(n), token.loc)),
             // | "(", EXPR3, ")" ;
             TokenKind::LParen => {
-                let e = parse_expr(tokens)?;
+                let e = parse_expr3(tokens)?;
 
                 match tokens.next() {
                     Some(Token {

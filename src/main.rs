@@ -1,4 +1,4 @@
-use parser_2::{lex, parse};
+use parser_2::{Ast};
 use std::io;
 
 /// プロンプトを表示しユーザの入力を促す
@@ -8,6 +8,16 @@ fn prompt(s: &str) -> io::Result<()> {
     let mut stdout = stdout.lock();
     stdout.write(s.as_bytes())?;
     stdout.flush()
+}
+
+fn show_trace<E: std::error::Error>(e: E) {
+    eprintln!("{}", e);
+    let mut source = e.source();
+
+    while let Some(e) = source {
+        eprintln!("caused by {}", e);
+        source = e.source()
+    }
 }
 
 fn main() {
@@ -21,8 +31,14 @@ fn main() {
         prompt("> ").unwrap();
 
         if let Some(Ok(line)) = lines.next() {
-            let tokens = lex(&line).unwrap();
-            let ast = parse(tokens).unwrap();
+            let ast = match line.parse::<Ast>() {
+                Ok(ast) => ast,
+                Err(e) => {
+                    // e.show_diagnostic(&line);
+                    show_trace(e);
+                    continue;
+                },
+            };
             println!("{:?}", ast);
         } else {
             break;
