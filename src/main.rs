@@ -1,6 +1,9 @@
-use parser_2::{Ast, Error};
+mod common;
+mod parser;
+mod interpreter;
+
+use common::{Ast, Error};
 use std::io;
-use std::error::Error as StdError;
 
 /// プロンプトを表示しユーザの入力を促す
 fn prompt(s: &str) -> io::Result<()> {
