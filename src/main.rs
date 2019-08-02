@@ -1,5 +1,6 @@
-use parser_2::{Ast};
+use parser_2::{Ast, Error};
 use std::io;
+use std::error::Error as StdError;
 
 /// プロンプトを表示しユーザの入力を促す
 fn prompt(s: &str) -> io::Result<()> {
@@ -10,7 +11,8 @@ fn prompt(s: &str) -> io::Result<()> {
     stdout.flush()
 }
 
-fn show_trace<E: std::error::Error>(e: E) {
+fn show_trace(e: Error, line: &str) {
+    e.show_diagnostic(&line);
     eprintln!("{}", e);
     let mut source = e.source();
 
@@ -34,10 +36,9 @@ fn main() {
             let ast = match line.parse::<Ast>() {
                 Ok(ast) => ast,
                 Err(e) => {
-                    // e.show_diagnostic(&line);
-                    show_trace(e);
+                    show_trace(e, &line);
                     continue;
-                },
+                }
             };
             println!("{:?}", ast);
         } else {

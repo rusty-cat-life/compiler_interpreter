@@ -232,6 +232,35 @@ pub enum Error {
     Parser(ParseError),
 }
 
+impl Error {
+    /// 診断メッセージを表示する
+    pub fn show_diagnostic(&self, input: &str) {
+        use self::Error::*;
+        use self::ParseError as P;
+        // エラー情報とその位置情報を取り出す。エラーの種類によって位置情報を調整する。
+        let (e, loc): (&StdError, Loc) = match self {
+            Lexer(e) => (e, e.loc.clone()),
+            Parser(e) => {
+                let loc = match e {
+                    P::UnexpectedToken(Token { loc, .. })
+                    | P::NotExpression(Token { loc, .. })
+                    | P::NotOperator(Token { loc, .. })
+                    | P::UnclosedOpenParen(Token { loc, .. }) => loc.clone(),
+                    // redundant expressionはトークン以降行末までが余りなのでlocの終了位置を調整する
+                    P::RedundantExpression(Token { loc, .. }) => Loc(loc.0, input.len()),
+                    // EoFはloc情報を持っていないのでその場で作る
+                    P::Eof => Loc(input.len(), input.len() + 1),
+                };
+                (e, loc)
+            }
+        };
+        // エラー情報を簡単に表示し
+        eprintln!("{}", e);
+        // エラー位置を指示する
+        print_annot(input, loc);
+    }
+}
+
 impl From<LexError> for Error {
     fn from(e: LexError) -> Self {
         Error::Lexer(e)
@@ -295,6 +324,13 @@ impl fmt::Display for ParseError {
 }
 
 impl StdError for ParseError {}
+
+fn print_annot(input: &str, loc: Loc) {
+    // 入力に対して
+    eprintln!("{}", input);
+    // 位置情報を分かりやすく示す
+    eprintln!("{}{}", " ".repeat(loc.0), "^".repeat(loc.1 - loc.0));
+}
 
 pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     let mut result = vec![];
