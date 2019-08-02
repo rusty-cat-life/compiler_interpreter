@@ -2,7 +2,8 @@ mod common;
 mod interpreter;
 mod parser;
 
-use common::{Ast, Error};
+use common::Ast;
+use interpreter::Interpreter;
 use std::io;
 
 /// プロンプトを表示しユーザの入力を促す
@@ -16,6 +17,8 @@ fn prompt(s: &str) -> io::Result<()> {
 
 fn main() {
     use std::io::{stdin, BufRead, BufReader};
+
+    let mut interp = Interpreter::new();
 
     let stdin = stdin();
     let stdin = stdin.lock();
@@ -33,7 +36,16 @@ fn main() {
                     continue;
                 }
             };
-            println!("{:?}", ast);
+            let n = match interp.eval(&ast) {
+                Ok(n) => n,
+                Err(e) => {
+                    // eprintln!("{}", e);
+                    // e.show_diagnostic(&line);
+                    continue;
+                }
+            };
+
+            println!("{}", n);
         } else {
             break;
         }

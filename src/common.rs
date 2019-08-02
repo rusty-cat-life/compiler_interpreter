@@ -337,3 +337,10 @@ fn print_annot(input: &str, loc: Loc) {
     // 位置情報を分かりやすく示す
     eprintln!("{}{}", " ".repeat(loc.0), "^".repeat(loc.1 - loc.0));
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum InterpreterErrorKind {
+    DivisionByZero,
+}
+
+pub type InterpreterError = Annot<InterpreterErrorKind>;
