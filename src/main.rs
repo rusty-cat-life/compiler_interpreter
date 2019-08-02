@@ -1,6 +1,6 @@
 mod common;
-mod parser;
 mod interpreter;
+mod parser;
 
 use common::{Ast, Error};
 use std::io;
@@ -12,17 +12,6 @@ fn prompt(s: &str) -> io::Result<()> {
     let mut stdout = stdout.lock();
     stdout.write(s.as_bytes())?;
     stdout.flush()
-}
-
-fn show_trace(e: Error, line: &str) {
-    e.show_diagnostic(&line);
-    eprintln!("{}", e);
-    let mut source = e.source();
-
-    while let Some(e) = source {
-        eprintln!("caused by {}", e);
-        source = e.source()
-    }
 }
 
 fn main() {
@@ -39,7 +28,7 @@ fn main() {
             let ast = match line.parse::<Ast>() {
                 Ok(ast) => ast,
                 Err(e) => {
-                    show_trace(e, &line);
+                    e.show_diagnostic(&line);
                     continue;
                 }
             };

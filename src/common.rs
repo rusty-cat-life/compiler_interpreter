@@ -257,6 +257,13 @@ impl Error {
         eprintln!("{}", e);
         // エラー位置を指示する
         print_annot(input, loc);
+        // sourceを再帰的に呼び出し表示
+        let mut source = e.source();
+
+        while let Some(e) = source {
+            eprintln!("caused by {}", e);
+            source = e.source()
+        }
     }
 }
 
