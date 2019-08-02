@@ -28,6 +28,7 @@ fn main() {
             let ast = match line.parse::<Ast>() {
                 Ok(ast) => ast,
                 Err(e) => {
+                    eprintln!("{}", e);
                     e.show_diagnostic(&line);
                     continue;
                 }
