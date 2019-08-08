@@ -48,11 +48,23 @@ pub enum TokenKind {
     /// int type
     Int,
     /// =
-    Equal,
+    Assign,
     /// ;
     Semicolon,
     /// variable name
-    Var(String)
+    Var(String),
+    /// ==
+    Equal,
+    // !=
+    Unequal,
+    /// >
+    Greater,
+    /// >=
+    GreaterEqual,
+    /// <
+    Less,
+    /// <=
+    LessEqual
 }
 
 impl fmt::Display for TokenKind {
@@ -67,8 +79,14 @@ impl fmt::Display for TokenKind {
             Slash => write!(f, "/"),
             LParen => write!(f, "("),
             RParen => write!(f, ")"),
+            Equal => write!(f, "=="),
+            Unequal => write!(f, "!="),
+            Greater => write!(f, ">"),
+            GreaterEqual => write!(f, ">="),
+            Less => write!(f, "<"),
+            LessEqual => write!(f, "<="),
             Int => write!(f, "Int"),
-            Equal => write!(f, "="),
+            Assign => write!(f, "="),
             Semicolon => write!(f, ";"),
             Var(s) => write!(f, "variable name: {}", s)
         }
@@ -110,8 +128,8 @@ impl Token {
         Self::new(TokenKind::Int, loc)
     }
 
-    pub fn equal(loc: Loc) -> Self {
-        Self::new(TokenKind::Equal, loc)
+    pub fn assign(loc: Loc) -> Self {
+        Self::new(TokenKind::Assign, loc)
     }
 
     pub fn semicolon(loc: Loc) -> Self {

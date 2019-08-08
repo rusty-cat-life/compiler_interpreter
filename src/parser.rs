@@ -26,7 +26,7 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'/' => lex_a_token!(lex_slash(input, position)),
             b'(' => lex_a_token!(lex_lparen(input, position)),
             b')' => lex_a_token!(lex_rparen(input, position)),
-            b'=' => lex_a_token!(lex_equal(input, position)),
+            b'=' => lex_a_token!(lex_assign(input, position)),
             b';' => lex_a_token!(lex_semicolon(input, position)),
             b'a'...b'z' => lex_a_token!(lex_str(input, position)),
             b' ' | b'\n' | b'\t' => {
@@ -87,8 +87,8 @@ fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b')').map(|(_, end)| (Token::rparen(Loc(start, end)), end))
 }
 
-fn lex_equal(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
-    consume_byte(input, start, b'=').map(|(_, end)| (Token::equal(Loc(start, end)), end))
+fn lex_assign(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'=').map(|(_, end)| (Token::assign(Loc(start, end)), end))
 }
 
 fn lex_semicolon(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
@@ -159,7 +159,7 @@ fn test_lexer2() {
         Ok(vec![
             Token::int(Loc(0, 3)),
             Token::var("x", Loc(4, 5)),
-            Token::equal(Loc(6, 7)),
+            Token::assign(Loc(6, 7)),
             Token::number(1, Loc(8, 9)),
             Token::semicolon(Loc(9, 10)),
         ])
@@ -413,7 +413,7 @@ fn test_parser2() {
     let ast = parse(vec![
         Token::int(Loc(0, 3)),
         Token::var("x", Loc(4, 5)),
-        Token::equal(Loc(6, 7)),
+        Token::assign(Loc(6, 7)),
         Token::number(1, Loc(8, 9)),
         Token::semicolon(Loc(9, 10)),
     ]);
