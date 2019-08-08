@@ -26,6 +26,7 @@ impl Interpreter {
                 self.eval_binop(op, l, r)
                     .map_err(|e| InterpreterError::new(e, expr.loc.clone()))
             }
+            Int { ref var, ref body } => unimplemented!(),
         }
     }
 

@@ -170,7 +170,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
     // 入力をイテレータにし、Peekableにする
     let mut tokens = tokens.into_iter().peekable();
     // その後parse_exprを呼んでエラー処理をする
-    let result = parse_expr(&mut tokens)?;
+    let result = parse_stmt(&mut tokens)?;
     match tokens.next() {
         Some(token) => Err(ParseError::RedundantExpression(token)),
         None => Ok(result),
@@ -291,6 +291,53 @@ where
             _ => Err(ParseError::NotExpression(token)),
         })
 }
+
+fn parse_stmt<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    match tokens.peek().map(|token| token.value.clone()) {
+        Some(TokenKind::Int) => {
+            // ("+" | "-")
+            let loc_start = match tokens.next() {
+                Some(Token {
+                    value: TokenKind::Int,
+                    loc,
+                }) => loc,
+                _ => unreachable!(),
+            };
+            let var = match tokens.next() {
+                Some(Token {
+                    value: TokenKind::Var(s),
+                    loc,
+                }) => s,
+                Some(t) => return Err(ParseError::UnexpectedToken(t)),
+                _ => unreachable!(),
+            };
+            match tokens.next() {
+                Some(Token {
+                    value: TokenKind::Equal,
+                    loc,
+                }) => (),
+                Some(t) => return Err(ParseError::UnexpectedToken(t)),
+                _ => unreachable!(),
+            };
+            let body = parse_expr(tokens)?;
+            let loc_end = match tokens.next() {
+                Some(Token {
+                    value: TokenKind::Semicolon,
+                    loc,
+                }) => loc,
+                Some(t) => return Err(ParseError::UnexpectedToken(t)),
+                _ => unreachable!(),
+            };
+            let loc = loc_start.merge(&loc_end);
+            Ok(Ast::int(var, body, loc))
+        }
+        _ => parse_expr3(tokens),
+    }
+}
+
 fn parse_left_binop<Tokens>(
     tokens: &mut Peekable<Tokens>,
     subexpr_parser: fn(&mut Peekable<Tokens>) -> Result<Ast, ParseError>,
@@ -354,6 +401,26 @@ fn test_parser() {
                 Loc(12, 15)
             ),
             Loc(0, 15)
+        ))
+    )
+}
+
+#[test]
+fn test_parser2() {
+    // int x = 1;
+    let ast = parse(vec![
+        Token::int(Loc(0, 3)),
+        Token::var("x", Loc(4, 5)),
+        Token::equal(Loc(6, 7)),
+        Token::number(1, Loc(8, 9)),
+        Token::semicolon(Loc(9, 10)),
+    ]);
+    assert_eq!(
+        ast,
+        Ok(Ast::int(
+            "x".to_string(),
+            Ast::num(1, Loc(8, 9)),
+            Loc(0, 10)
         ))
     )
 }

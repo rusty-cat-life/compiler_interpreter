@@ -164,6 +164,8 @@ pub enum AstKind {
     UniOp { op: UniOp, e: Box<Ast> },
     /// 二項演算
     BinOp { op: BinOp, l: Box<Ast>, r: Box<Ast> },
+    /// Int
+    Int { var: String, body: Box<Ast> }
 }
 
 pub type Ast = Annot<AstKind>;
@@ -187,6 +189,13 @@ impl Ast {
             },
             loc,
         )
+    }
+
+    pub fn int(var: String, body: Ast, loc: Loc) -> Self {
+        Self::new(AstKind::Int {
+            var,
+            body: Box::new(body)
+        }, loc)
     }
 }
 
