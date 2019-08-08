@@ -288,6 +288,8 @@ where
                     _ => Err(ParseError::UnclosedOpenParen(token)),
                 }
             }
+            // Var
+            TokenKind::Var(s) => Ok(Ast::new(AstKind::Var(s), token.loc)),
             _ => Err(ParseError::NotExpression(token)),
         })
 }
@@ -309,7 +311,7 @@ where
             let var = match tokens.next() {
                 Some(Token {
                     value: TokenKind::Var(s),
-                    loc,
+                    ..
                 }) => s,
                 Some(t) => return Err(ParseError::UnexpectedToken(t)),
                 _ => unreachable!(),
@@ -317,7 +319,7 @@ where
             match tokens.next() {
                 Some(Token {
                     value: TokenKind::Equal,
-                    loc,
+                    ..
                 }) => (),
                 Some(t) => return Err(ParseError::UnexpectedToken(t)),
                 _ => unreachable!(),

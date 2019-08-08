@@ -165,7 +165,9 @@ pub enum AstKind {
     /// 二項演算
     BinOp { op: BinOp, l: Box<Ast>, r: Box<Ast> },
     /// Int
-    Int { var: String, body: Box<Ast> }
+    Int { var: String, body: Box<Ast> },
+    /// 変数
+    Var(String)
 }
 
 pub type Ast = Annot<AstKind>;
@@ -196,6 +198,10 @@ impl Ast {
             var,
             body: Box::new(body)
         }, loc)
+    }
+
+    pub fn var(s: String, loc: Loc) -> Self {
+        Self::new(AstKind::Var(s), loc)
     }
 }
 
@@ -378,6 +384,7 @@ fn print_annot(input: &str, loc: Loc) {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InterpreterErrorKind {
     DivisionByZero,
+    UnboundVariable(String),
 }
 
 pub type InterpreterError = Annot<InterpreterErrorKind>;

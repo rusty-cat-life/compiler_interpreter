@@ -1,10 +1,11 @@
 use super::common::*;
+use std::collections::HashMap;
 
-pub struct Interpreter;
+pub struct Interpreter(HashMap<String, i64>);
 
 impl Interpreter {
     pub fn new() -> Self {
-        Interpreter
+        Interpreter(HashMap::new())
     }
 
     pub fn eval(&mut self, expr: &Ast) -> Result<i64, InterpreterError> {
@@ -26,7 +27,15 @@ impl Interpreter {
                 self.eval_binop(op, l, r)
                     .map_err(|e| InterpreterError::new(e, expr.loc.clone()))
             }
-            Int { ref var, ref body } => unimplemented!(),
+            Int { ref var, ref body } => {
+                let e = self.eval(body)?;
+                self.0.insert(var.clone(), e);
+                Ok(0)
+            }
+            Var(ref s) => self.0.get(s).cloned().ok_or(InterpreterError::new(
+                InterpreterErrorKind::UnboundVariable(s.clone()),
+                expr.loc.clone(),
+            )),
         }
     }
 
