@@ -29,7 +29,7 @@ impl<T> Annot<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TokenKind {
     /// [0-9][0-9]*
     Number(u64),
@@ -45,6 +45,14 @@ pub enum TokenKind {
     LParen,
     /// )
     RParen,
+    /// int type
+    Int,
+    /// =
+    Equal,
+    /// ;
+    Semicolon,
+    /// variable name
+    Var(String)
 }
 
 impl fmt::Display for TokenKind {
@@ -59,6 +67,10 @@ impl fmt::Display for TokenKind {
             Slash => write!(f, "/"),
             LParen => write!(f, "("),
             RParen => write!(f, ")"),
+            Int => write!(f, "Int"),
+            Equal => write!(f, "="),
+            Semicolon => write!(f, ";"),
+            Var(s) => write!(f, "variable name: {}", s)
         }
     }
 }
@@ -92,6 +104,22 @@ impl Token {
 
     pub fn rparen(loc: Loc) -> Self {
         Self::new(TokenKind::RParen, loc)
+    }
+
+    pub fn int(loc: Loc) -> Self {
+        Self::new(TokenKind::Int, loc)
+    }
+
+    pub fn equal(loc: Loc) -> Self {
+        Self::new(TokenKind::Equal, loc)
+    }
+
+    pub fn semicolon(loc: Loc) -> Self {
+        Self::new(TokenKind::Semicolon, loc)
+    }
+
+    pub fn var(s: impl Into<String>, loc: Loc) -> Self {
+        Self::new(TokenKind::Var(s.into()), loc)
     }
 }
 

@@ -26,6 +26,9 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'/' => lex_a_token!(lex_slash(input, position)),
             b'(' => lex_a_token!(lex_lparen(input, position)),
             b')' => lex_a_token!(lex_rparen(input, position)),
+            b'=' => lex_a_token!(lex_equal(input, position)),
+            b';' => lex_a_token!(lex_semicolon(input, position)),
+            b'a'...b'z' => lex_a_token!(lex_str(input, position)),
             b' ' | b'\n' | b'\t' => {
                 let (_, pos) = skip_spaces(input, position)?;
                 position = pos;
@@ -84,6 +87,14 @@ fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b')').map(|(_, end)| (Token::rparen(Loc(start, end)), end))
 }
 
+fn lex_equal(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'=').map(|(_, end)| (Token::equal(Loc(start, end)), end))
+}
+
+fn lex_semicolon(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b';').map(|(_, end)| (Token::semicolon(Loc(start, end)), end))
+}
+
 fn recognize_many(input: &[u8], mut pos: usize, mut f: impl FnMut(u8) -> bool) -> usize {
     while pos < input.len() && f(input[pos]) {
         pos += 1;
@@ -101,6 +112,21 @@ fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     let num = from_utf8(&input[start..end]).unwrap().parse().unwrap();
 
     Ok((Token::number(num, Loc(start, end)), end))
+}
+
+fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    use std::str::from_utf8;
+
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"abcdefghijklmnopqrstuvwxyz".contains(&b));
+    let s = from_utf8(&input[start..end])
+        // start..posの構成から `from_utf8` は常に成功するため`unwrap`しても安全
+        .unwrap();
+    if s == "int" {
+        Ok((Token::int(Loc(start, end)), end))
+    } else {
+        Ok((Token::var(s, Loc(start, end)), end))
+    }
 }
 
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
@@ -122,6 +148,20 @@ fn test_lexer() {
             Token::minus(Loc(10, 11)),
             Token::minus(Loc(12, 13)),
             Token::number(10, Loc(13, 15)),
+        ])
+    )
+}
+
+#[test]
+fn test_lexer2() {
+    assert_eq!(
+        lex("int x = 1;"),
+        Ok(vec![
+            Token::int(Loc(0, 3)),
+            Token::var("x", Loc(4, 5)),
+            Token::equal(Loc(6, 7)),
+            Token::number(1, Loc(8, 9)),
+            Token::semicolon(Loc(9, 10)),
         ])
     )
 }
@@ -199,7 +239,7 @@ fn parse_expr1<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
     Tokens: Iterator<Item = Token>,
 {
-    match tokens.peek().map(|token| token.value) {
+    match tokens.peek().map(|token| token.value.clone()) {
         Some(TokenKind::Plus) | Some(TokenKind::Minus) => {
             // ("+" | "-")
             let operator = match tokens.next() {
