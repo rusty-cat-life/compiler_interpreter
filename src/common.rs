@@ -45,8 +45,22 @@ pub enum TokenKind {
     LParen,
     /// )
     RParen,
+    /// void type
+    Void,
+    /// char type
+    Char,
     /// int type
     Int,
+    /// float type
+    Float,
+    /// double type
+    Double,
+    /// struct type
+    Struct,
+    /// union type
+    Union,
+    /// enum type
+    Enum,
     /// =
     Assign,
     /// ;
