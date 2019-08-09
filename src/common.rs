@@ -61,6 +61,12 @@ pub enum TokenKind {
     Union,
     /// enum type
     Enum,
+    /// unsigned keyword
+    Unsigned,
+    /// signed keyword
+    Signed,
+    /// long keyword
+    Long,
     /// =
     Assign,
     /// ;
@@ -78,7 +84,7 @@ pub enum TokenKind {
     /// <
     Less,
     /// <=
-    LessEqual
+    LessEqual,
 }
 
 impl fmt::Display for TokenKind {
@@ -99,10 +105,20 @@ impl fmt::Display for TokenKind {
             GreaterEqual => write!(f, ">="),
             Less => write!(f, "<"),
             LessEqual => write!(f, "<="),
+            Void => write!(f, "Void"),
+            Char => write!(f, "Char"),
             Int => write!(f, "Int"),
+            Float => write!(f, "Float"),
+            Double => write!(f, "Double"),
+            Struct => write!(f, "Struct"),
+            Union => write!(f, "Union"),
+            Enum => write!(f, "Enum"),
+            Unsigned => write!(f, "Unsigned"),
+            Signed => write!(f, "Signed"),
+            Long => write!(f, "Long"),
             Assign => write!(f, "="),
             Semicolon => write!(f, ";"),
-            Var(s) => write!(f, "variable name: {}", s)
+            Var(s) => write!(f, "variable name: {}", s),
         }
     }
 }
@@ -199,7 +215,7 @@ pub enum AstKind {
     /// Int
     Int { var: String, body: Box<Ast> },
     /// 変数
-    Var(String)
+    Var(String),
 }
 
 pub type Ast = Annot<AstKind>;
@@ -226,10 +242,13 @@ impl Ast {
     }
 
     pub fn int(var: String, body: Ast, loc: Loc) -> Self {
-        Self::new(AstKind::Int {
-            var,
-            body: Box::new(body)
-        }, loc)
+        Self::new(
+            AstKind::Int {
+                var,
+                body: Box::new(body),
+            },
+            loc,
+        )
     }
 
     pub fn var(s: String, loc: Loc) -> Self {
