@@ -154,8 +154,48 @@ impl Token {
         Self::new(TokenKind::RParen, loc)
     }
 
+    pub fn void(loc: Loc) -> Self {
+        Self::new(TokenKind::Void, loc)
+    }
+
+    pub fn char(loc: Loc) -> Self {
+        Self::new(TokenKind::Char, loc)
+    }
+
     pub fn int(loc: Loc) -> Self {
         Self::new(TokenKind::Int, loc)
+    }
+
+    pub fn float(loc: Loc) -> Self {
+        Self::new(TokenKind::Float, loc)
+    }
+
+    pub fn double(loc: Loc) -> Self {
+        Self::new(TokenKind::Double, loc)
+    }
+
+    pub fn r#struct(loc: Loc) -> Self {
+        Self::new(TokenKind::Struct, loc)
+    }
+
+    pub fn union(loc: Loc) -> Self {
+        Self::new(TokenKind::Union, loc)
+    }
+
+    pub fn r#enum(loc: Loc) -> Self {
+        Self::new(TokenKind::Enum, loc)
+    }
+
+    pub fn unsigned(loc: Loc) -> Self {
+        Self::new(TokenKind::Unsigned, loc)
+    }
+
+    pub fn signed(loc: Loc) -> Self {
+        Self::new(TokenKind::Signed, loc)
+    }
+
+    pub fn long(loc: Loc) -> Self {
+        Self::new(TokenKind::Long, loc)
     }
 
     pub fn assign(loc: Loc) -> Self {

@@ -122,10 +122,20 @@ fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     let s = from_utf8(&input[start..end])
         // start..posの構成から `from_utf8` は常に成功するため`unwrap`しても安全
         .unwrap();
-    if s == "int" {
-        Ok((Token::int(Loc(start, end)), end))
-    } else {
-        Ok((Token::var(s, Loc(start, end)), end))
+
+    match s {
+        "void" => Ok((Token::void(Loc(start, end)), end)),
+        "char" => Ok((Token::char(Loc(start, end)), end)),
+        "int" => Ok((Token::int(Loc(start, end)), end)),
+        "float" => Ok((Token::float(Loc(start, end)), end)),
+        "double" => Ok((Token::double(Loc(start, end)), end)),
+        "struct" => Ok((Token::r#struct(Loc(start, end)), end)),
+        "union" => Ok((Token::union(Loc(start, end)), end)),
+        "enum" => Ok((Token::r#enum(Loc(start, end)), end)),
+        "unsigned" => Ok((Token::unsigned(Loc(start, end)), end)),
+        "signed" => Ok((Token::signed(Loc(start, end)), end)),
+        "long" => Ok((Token::long(Loc(start, end)), end)),
+        _ => Ok((Token::var(s, Loc(start, end)), end)),
     }
 }
 
