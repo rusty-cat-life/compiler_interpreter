@@ -355,6 +355,7 @@ where
 {
     match tokens.peek().map(|token| token.value.clone()) {
         Some(TokenKind::Int) => parse_stmt1(tokens, TokenKind::Int),
+        Some(TokenKind::Char) => parse_stmt1(tokens, TokenKind::Char),
         _ => parse_expr3(tokens),
     }
 }
@@ -377,7 +378,7 @@ where
     };
     match tokens.next() {
         Some(Token {
-            value: TokenKind::Equal,
+            value: TokenKind::Assign,
             ..
         }) => (),
         Some(t) => return Err(ParseError::UnexpectedToken(t)),
