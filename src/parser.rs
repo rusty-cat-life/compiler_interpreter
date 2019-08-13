@@ -398,6 +398,34 @@ where
     }
 }
 
+fn expr_equality<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>, 
+    {
+        fn parse_expr_equality_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<EqOp, ParseError>
+        where
+            Tokens: Iterator<Item = Token>,
+        {
+            let operator = tokens
+                .peek()
+                // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
+                .ok_or(ParseError::Eof)
+                // エラーを返すかもしれない値をつなげる
+                .and_then(|token| match token.value {
+                    TokenKind::Equal => Ok(EqOp::equal(token.loc.clone())),
+                    TokenKind::Unequal => Ok(EqOp::unequal(token.loc.clone())),
+                    _ => Err(ParseError::NotOperator(token.clone())),
+                })?;
+
+            tokens.next();
+
+            Ok(operator)
+        }
+
+        parse_left_relop(tokens, parse_expr1, parse_expr_equality_op)
+
+    }
+
 fn parse_left_binop<Tokens>(
     tokens: &mut Peekable<Tokens>,
     subexpr_parser: fn(&mut Peekable<Tokens>) -> Result<Ast, ParseError>,
@@ -420,6 +448,35 @@ where
                 let r = subexpr_parser(tokens)?;
                 let loc = e.loc.merge(&r.loc);
                 e = Ast::binop(operator, e, r, loc)
+            }
+            _ => break,
+        }
+    }
+    Ok(e)
+}
+
+fn parse_left_relop<Tokens>(
+    tokens: &mut Peekable<Tokens>,
+    subexpr_parser: fn(&mut Peekable<Tokens>) -> Result<Ast, ParseError>,
+    op_parser: fn(&mut Peekable<Tokens>) -> Result<RelOp, ParseError>,
+) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    let mut e = subexpr_parser(tokens)?;
+
+    loop {
+        match tokens.peek() {
+            Some(_) => {
+                let operator = match op_parser(tokens) {
+                    Ok(op) => op,
+                    // ここでパースに失敗したのはこれ以上中置演算子がないという意味
+                    Err(_) => break,
+                };
+
+                let r = subexpr_parser(tokens)?;
+                let loc = e.loc.merge(&r.loc);
+                e = Ast::relop(operator, e, r, loc)
             }
             _ => break,
         }

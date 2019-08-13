@@ -259,6 +259,10 @@ pub enum AstKind {
     UniOp { op: UniOp, e: Box<Ast> },
     /// 二項演算
     BinOp { op: BinOp, l: Box<Ast>, r: Box<Ast> },
+    /// 比較演算子(equality)
+    EqOp { op: EqOp, l: Box<Ast>, r: Box<Ast> },
+    /// 比較演算子(relational)
+    RelOp { op: RelOp, l: Box<Ast>, r: Box<Ast> },
     /// Int
     Int { var: String, body: Box<Ast> },
     /// 変数
@@ -284,6 +288,17 @@ impl Ast {
     pub fn binop(op: BinOp, l: Ast, r: Ast, loc: Loc) -> Self {
         Self::new(
             AstKind::BinOp {
+                op,
+                l: Box::new(l),
+                r: Box::new(r),
+            },
+            loc,
+        )
+    }
+
+    pub fn relop(op: RelOp, l: Ast, r: Ast, loc: Loc) -> Self {
+        Self::new(
+            AstKind::RelOp {
                 op,
                 l: Box::new(l),
                 r: Box::new(r),
@@ -374,6 +389,60 @@ impl BinOp {
 
     pub fn div(loc: Loc) -> Self {
         Self::new(BinOpKind::Div, loc)
+    }
+}
+
+// 比較演算子（equality）
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum EqOpKind {
+    // ==
+    Equal,
+    // !=
+    Unequal,    
+}
+
+pub type EqOp = Annot<EqOpKind>;
+
+impl EqOp {
+    pub fn equal(loc: Loc) -> Self {
+        Self::new(EqOpKind::Equal, loc)
+    }
+
+    pub fn unequal(loc: Loc) -> Self {
+        Self::new(EqOpKind::Unequal, loc)
+    }
+}
+
+// 比較演算子(relational)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RelOpKind {
+    // >
+    Greater,
+    // >=
+    GreaterEqual,
+    // <
+    Less,
+    // <=
+    LessEqual
+}
+
+pub type RelOp = Annot<RelOpKind>;
+
+impl RelOp {
+    pub fn greater(loc: Loc) -> Self {
+        Self::new(RelOpKind::Greater, loc)
+    }
+
+    pub fn greater_equal(loc: Loc) -> Self {
+        Self::new(RelOpKind::GreaterEqual, loc)
+    }
+
+    pub fn less(loc: Loc) -> Self {
+        Self::new(RelOpKind::Less, loc)
+    }
+
+    pub fn less_equal(loc: Loc) -> Self {
+        Self::new(RelOpKind::LessEqual, loc)
     }
 }
 
