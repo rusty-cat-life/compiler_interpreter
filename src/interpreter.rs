@@ -36,6 +36,7 @@ impl Interpreter {
                 InterpreterErrorKind::UnboundVariable(s.clone()),
                 expr.loc.clone(),
             )),
+            Char(c) => unimplemented!(),
         }
     }
 

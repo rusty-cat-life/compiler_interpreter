@@ -71,8 +71,8 @@ pub enum TokenKind {
     Assign,
     /// ;
     Semicolon,
-    /// variable name
-    Var(String),
+    /// string
+    r#String(String),
     /// ==
     Equal,
     // !=
@@ -85,6 +85,8 @@ pub enum TokenKind {
     Less,
     /// <=
     LessEqual,
+    /// charリテラル
+    CharLiteral(char)
 }
 
 impl fmt::Display for TokenKind {
@@ -118,7 +120,8 @@ impl fmt::Display for TokenKind {
             Long => write!(f, "Long"),
             Assign => write!(f, "="),
             Semicolon => write!(f, ";"),
-            Var(s) => write!(f, "variable name: {}", s),
+            r#String(s) => write!(f, "String: {}", s),
+            CharLiteral(c) => write!(f, "Char Literal: {}", c)
         }
     }
 }
@@ -206,8 +209,12 @@ impl Token {
         Self::new(TokenKind::Semicolon, loc)
     }
 
-    pub fn var(s: impl Into<String>, loc: Loc) -> Self {
-        Self::new(TokenKind::Var(s.into()), loc)
+    pub fn string(s: impl Into<String>, loc: Loc) -> Self {
+        Self::new(TokenKind::r#String(s.into()), loc)
+    }
+
+    pub fn char_literal(c: char, loc: Loc) -> Self {
+        Self::new(TokenKind::CharLiteral(c), loc)
     }
 }
 
@@ -256,6 +263,8 @@ pub enum AstKind {
     Int { var: String, body: Box<Ast> },
     /// 変数
     Var(String),
+    /// Char
+    Char(char)
 }
 
 pub type Ast = Annot<AstKind>;
@@ -293,6 +302,10 @@ impl Ast {
 
     pub fn var(s: String, loc: Loc) -> Self {
         Self::new(AstKind::Var(s), loc)
+    }
+
+    pub fn char(c: impl Into<char>, loc: Loc) -> Self {
+        Self::new(AstKind::Char(c.into()), loc)
     }
 }
 
@@ -378,7 +391,8 @@ impl Error {
                     P::UnexpectedToken(Token { loc, .. })
                     | P::NotExpression(Token { loc, .. })
                     | P::NotOperator(Token { loc, .. })
-                    | P::UnclosedOpenParen(Token { loc, .. }) => loc.clone(),
+                    | P::UnclosedOpenParen(Token { loc, .. })
+                    | P::InvalidChar(Token { loc, .. }) => loc.clone(),
                     // redundant expressionはトークン以降行末までが余りなのでlocの終了位置を調整する
                     P::RedundantExpression(Token { loc, .. }) => Loc(loc.0, input.len()),
                     // EoFはloc情報を持っていないのでその場で作る
@@ -444,6 +458,8 @@ pub enum ParseError {
     RedundantExpression(Token),
     /// パース途中で入力が終わった
     Eof,
+    /// 無効なChar
+    InvalidChar(Token)
 }
 
 impl fmt::Display for ParseError {
@@ -458,6 +474,7 @@ impl fmt::Display for ParseError {
             RedundantExpression(t) => {
                 write!(f, "{}: expression after '{}' is redundant", t.loc, t.value)
             }
+            InvalidChar(t) => write!(f, "{}: {} is invalid char", t.loc, t.value),
             Eof => write!(f, "End of file"),
         }
     }

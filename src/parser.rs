@@ -33,6 +33,7 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
                 let (_, pos) = skip_spaces(input, position)?;
                 position = pos;
             }
+            b'\'' => lex_a_token!(lex_char(input, position)),
             b => {
                 return Err(LexError::invalid_char(
                     b as char,
@@ -135,8 +136,16 @@ fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
         "unsigned" => Ok((Token::unsigned(Loc(start, end)), end)),
         "signed" => Ok((Token::signed(Loc(start, end)), end)),
         "long" => Ok((Token::long(Loc(start, end)), end)),
-        _ => Ok((Token::var(s, Loc(start, end)), end)),
+        _ => Ok((Token::string(s, Loc(start, end)), end)),
     }
+}
+
+fn lex_char(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    let start = pos;
+
+    let c = input[start + 1] as char;
+
+    Ok((Token::char_literal(c, Loc(start, start + 1)), start + 3))
 }
 
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
@@ -168,10 +177,24 @@ fn test_lexer2() {
         lex("int x = 1;"),
         Ok(vec![
             Token::int(Loc(0, 3)),
-            Token::var("x", Loc(4, 5)),
+            Token::string("x", Loc(4, 5)),
             Token::assign(Loc(6, 7)),
             Token::number(1, Loc(8, 9)),
             Token::semicolon(Loc(9, 10)),
+        ])
+    )
+}
+
+#[test]
+fn test_lexer3() {
+    assert_eq!(
+        lex("char x = 't';"),
+        Ok(vec![
+            Token::char(Loc(0, 4)),
+            Token::string("x", Loc(5, 6)),
+            Token::assign(Loc(7, 8)),
+            Token::char_literal('t', Loc(9, 10)),
+            Token::semicolon(Loc(12, 13)),
         ])
     )
 }
@@ -282,7 +305,7 @@ where
     tokens
         .next()
         .ok_or(ParseError::Eof)
-        .and_then(|token| match token.value {
+        .and_then(|token| match token.value.clone() {
             // UNUMBER
             TokenKind::Number(n) => Ok(Ast::new(AstKind::Num(n), token.loc)),
             // | "(", EXPR3, ")" ;
@@ -298,8 +321,30 @@ where
                     _ => Err(ParseError::UnclosedOpenParen(token)),
                 }
             }
-            // Var
-            TokenKind::Var(s) => Ok(Ast::new(AstKind::Var(s), token.loc)),
+            TokenKind::r#String(s) => {
+                println!("{}", s);
+
+                // char
+                if s.starts_with("'") && s.ends_with("'") && s.len() == 3 {
+                    let mut chars = s.chars();
+
+                    println!("chars: {:?}", chars);
+
+                    chars.next();
+
+                    let c = match chars.next() {
+                        Some(c) => c,
+                        None => {
+                            return Err(ParseError::InvalidChar(token));
+                        }
+                    };
+
+                    return Ok(Ast::new(AstKind::Char(c), token.loc));
+                }
+
+                // Var
+                Ok(Ast::new(AstKind::Var(s), token.loc))
+            }
             _ => Err(ParseError::NotExpression(token)),
         })
 }
@@ -309,44 +354,49 @@ where
     Tokens: Iterator<Item = Token>,
 {
     match tokens.peek().map(|token| token.value.clone()) {
-        Some(TokenKind::Int) => {
-            // ("+" | "-")
-            let loc_start = match tokens.next() {
-                Some(Token {
-                    value: TokenKind::Int,
-                    loc,
-                }) => loc,
-                _ => unreachable!(),
-            };
-            let var = match tokens.next() {
-                Some(Token {
-                    value: TokenKind::Var(s),
-                    ..
-                }) => s,
-                Some(t) => return Err(ParseError::UnexpectedToken(t)),
-                _ => unreachable!(),
-            };
-            match tokens.next() {
-                Some(Token {
-                    value: TokenKind::Equal,
-                    ..
-                }) => (),
-                Some(t) => return Err(ParseError::UnexpectedToken(t)),
-                _ => unreachable!(),
-            };
-            let body = parse_expr(tokens)?;
-            let loc_end = match tokens.next() {
-                Some(Token {
-                    value: TokenKind::Semicolon,
-                    loc,
-                }) => loc,
-                Some(t) => return Err(ParseError::UnexpectedToken(t)),
-                _ => unreachable!(),
-            };
-            let loc = loc_start.merge(&loc_end);
-            Ok(Ast::int(var, body, loc))
-        }
+        Some(TokenKind::Int) => parse_stmt1(tokens, TokenKind::Int),
         _ => parse_expr3(tokens),
+    }
+}
+
+fn parse_stmt1<Tokens>(tokens: &mut Peekable<Tokens>, kind: TokenKind) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    let loc_start = match tokens.next() {
+        Some(Token { loc, .. }) => loc,
+        _ => unreachable!(),
+    };
+    let var = match tokens.next() {
+        Some(Token {
+            value: TokenKind::r#String(s),
+            ..
+        }) => s,
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::Equal,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+    let body = parse_expr(tokens)?;
+    let loc_end = match tokens.next() {
+        Some(Token {
+            value: TokenKind::Semicolon,
+            loc,
+        }) => loc,
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+    let loc = loc_start.merge(&loc_end);
+
+    match kind {
+        TokenKind::Int => Ok(Ast::int(var, body, loc)),
+        _ => unimplemented!(),
     }
 }
 
@@ -422,7 +472,7 @@ fn test_parser2() {
     // int x = 1;
     let ast = parse(vec![
         Token::int(Loc(0, 3)),
-        Token::var("x", Loc(4, 5)),
+        Token::string("x", Loc(4, 5)),
         Token::assign(Loc(6, 7)),
         Token::number(1, Loc(8, 9)),
         Token::semicolon(Loc(9, 10)),
