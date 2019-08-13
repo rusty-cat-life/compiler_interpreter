@@ -322,14 +322,9 @@ where
                 }
             }
             TokenKind::r#String(s) => {
-                println!("{}", s);
-
                 // char
                 if s.starts_with("'") && s.ends_with("'") && s.len() == 3 {
                     let mut chars = s.chars();
-
-                    println!("chars: {:?}", chars);
-
                     chars.next();
 
                     let c = match chars.next() {
