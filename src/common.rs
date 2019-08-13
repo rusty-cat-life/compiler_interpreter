@@ -264,7 +264,9 @@ pub enum AstKind {
     /// 変数
     Var(String),
     /// Char
-    Char(char)
+    Char { var: String, body: Box<Ast> },
+    /// Char Literal
+    CharLiteral(char)
 }
 
 pub type Ast = Annot<AstKind>;
@@ -304,8 +306,11 @@ impl Ast {
         Self::new(AstKind::Var(s), loc)
     }
 
-    pub fn char(c: impl Into<char>, loc: Loc) -> Self {
-        Self::new(AstKind::Char(c.into()), loc)
+    pub fn char(var: String, body: Ast, loc: Loc) -> Self {
+        Self::new(AstKind::Char {
+            var,
+            body: Box::new(body)
+        }, loc)
     }
 }
 

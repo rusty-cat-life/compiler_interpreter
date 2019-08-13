@@ -36,7 +36,8 @@ impl Interpreter {
                 InterpreterErrorKind::UnboundVariable(s.clone()),
                 expr.loc.clone(),
             )),
-            Char(c) => unimplemented!(),
+            Char { ref var, ref body } => unimplemented!(),
+            CharLiteral(ref c) => unimplemented!()
         }
     }
 

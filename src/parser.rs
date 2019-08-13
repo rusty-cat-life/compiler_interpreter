@@ -334,7 +334,8 @@ where
                         }
                     };
 
-                    return Ok(Ast::new(AstKind::Char(c), token.loc));
+                    // char literal
+                    return Ok(Ast::new(AstKind::CharLiteral(c), token.loc));
                 }
 
                 // Var
@@ -392,6 +393,7 @@ where
 
     match kind {
         TokenKind::Int => Ok(Ast::int(var, body, loc)),
+        TokenKind::Char => Ok(Ast::char(var, body, loc)),
         _ => unimplemented!(),
     }
 }
