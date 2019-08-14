@@ -27,6 +27,16 @@ impl Interpreter {
                 self.eval_binop(op, l, r)
                     .map_err(|e| InterpreterError::new(e, expr.loc.clone()))
             }
+            EqOp {
+                ref op,
+                ref l,
+                ref r,
+            } => unimplemented!(),
+            RelOp {
+                ref op,
+                ref l,
+                ref r,
+            } => unimplemented!(),
             Int { ref var, ref body } => {
                 let e = self.eval(body)?;
                 self.0.insert(var.clone(), e);
@@ -37,7 +47,8 @@ impl Interpreter {
                 expr.loc.clone(),
             )),
             Char { ref var, ref body } => unimplemented!(),
-            CharLiteral(ref c) => unimplemented!()
+            CharLiteral(ref c) => unimplemented!(),
+            
         }
     }
 

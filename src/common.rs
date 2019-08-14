@@ -86,7 +86,7 @@ pub enum TokenKind {
     /// <=
     LessEqual,
     /// charリテラル
-    CharLiteral(char)
+    CharLiteral(char),
 }
 
 impl fmt::Display for TokenKind {
@@ -121,7 +121,7 @@ impl fmt::Display for TokenKind {
             Assign => write!(f, "="),
             Semicolon => write!(f, ";"),
             r#String(s) => write!(f, "String: {}", s),
-            CharLiteral(c) => write!(f, "Char Literal: {}", c)
+            CharLiteral(c) => write!(f, "Char Literal: {}", c),
         }
     }
 }
@@ -155,6 +155,10 @@ impl Token {
 
     pub fn rparen(loc: Loc) -> Self {
         Self::new(TokenKind::RParen, loc)
+    }
+
+    pub fn equal(loc: Loc) -> Self {
+        Self::new(TokenKind::Equal, loc)
     }
 
     pub fn void(loc: Loc) -> Self {
@@ -270,7 +274,7 @@ pub enum AstKind {
     /// Char
     Char { var: String, body: Box<Ast> },
     /// Char Literal
-    CharLiteral(char)
+    CharLiteral(char),
 }
 
 pub type Ast = Annot<AstKind>;
@@ -307,6 +311,17 @@ impl Ast {
         )
     }
 
+    pub fn eqop(op: EqOp, l: Ast, r: Ast, loc: Loc) -> Self {
+        Self::new(
+            AstKind::EqOp {
+                op,
+                l: Box::new(l),
+                r: Box::new(r),
+            },
+            loc,
+        )
+    }
+
     pub fn int(var: String, body: Ast, loc: Loc) -> Self {
         Self::new(
             AstKind::Int {
@@ -322,10 +337,13 @@ impl Ast {
     }
 
     pub fn char(var: String, body: Ast, loc: Loc) -> Self {
-        Self::new(AstKind::Char {
-            var,
-            body: Box::new(body)
-        }, loc)
+        Self::new(
+            AstKind::Char {
+                var,
+                body: Box::new(body),
+            },
+            loc,
+        )
     }
 }
 
@@ -398,7 +416,7 @@ pub enum EqOpKind {
     // ==
     Equal,
     // !=
-    Unequal,    
+    Unequal,
 }
 
 pub type EqOp = Annot<EqOpKind>;
@@ -423,7 +441,7 @@ pub enum RelOpKind {
     // <
     Less,
     // <=
-    LessEqual
+    LessEqual,
 }
 
 pub type RelOp = Annot<RelOpKind>;
@@ -533,7 +551,7 @@ pub enum ParseError {
     /// パース途中で入力が終わった
     Eof,
     /// 無効なChar
-    InvalidChar(Token)
+    InvalidChar(Token),
 }
 
 impl fmt::Display for ParseError {

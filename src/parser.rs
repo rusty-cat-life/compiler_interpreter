@@ -26,7 +26,7 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'/' => lex_a_token!(lex_slash(input, position)),
             b'(' => lex_a_token!(lex_lparen(input, position)),
             b')' => lex_a_token!(lex_rparen(input, position)),
-            b'=' => lex_a_token!(lex_assign(input, position)),
+            b'=' => lex_a_token!(lex_assign_equal(input, position)),
             b';' => lex_a_token!(lex_semicolon(input, position)),
             b'a'...b'z' => lex_a_token!(lex_str(input, position)),
             b' ' | b'\n' | b'\t' => {
@@ -88,8 +88,15 @@ fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b')').map(|(_, end)| (Token::rparen(Loc(start, end)), end))
 }
 
-fn lex_assign(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
-    consume_byte(input, start, b'=').map(|(_, end)| (Token::assign(Loc(start, end)), end))
+fn lex_assign_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"=".contains(&b));
+
+    if end - start == 1 {
+        Ok((Token::assign(Loc(start, end)), end))
+    } else {
+        Ok((Token::equal(Loc(start, end)), end))
+    }
 }
 
 fn lex_semicolon(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
@@ -195,6 +202,18 @@ fn test_lexer3() {
             Token::assign(Loc(7, 8)),
             Token::char_literal('t', Loc(9, 10)),
             Token::semicolon(Loc(12, 13)),
+        ])
+    )
+}
+
+#[test]
+fn test_lexer4() {
+    assert_eq!(
+        lex("10 == 20"),
+        Ok(vec![
+            Token::number(10, Loc(0, 2)),
+            Token::equal(Loc(3, 5)),
+            Token::number(20, Loc(6, 8)),
         ])
     )
 }
@@ -400,31 +419,32 @@ where
 
 fn expr_equality<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
-    Tokens: Iterator<Item = Token>, 
+    Tokens: Iterator<Item = Token>,
+{
+    fn parse_expr_equality_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<EqOp, ParseError>
+    where
+        Tokens: Iterator<Item = Token>,
     {
-        fn parse_expr_equality_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<EqOp, ParseError>
-        where
-            Tokens: Iterator<Item = Token>,
-        {
-            let operator = tokens
-                .peek()
-                // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
-                .ok_or(ParseError::Eof)
-                // エラーを返すかもしれない値をつなげる
-                .and_then(|token| match token.value {
-                    TokenKind::Equal => Ok(EqOp::equal(token.loc.clone())),
-                    TokenKind::Unequal => Ok(EqOp::unequal(token.loc.clone())),
-                    _ => Err(ParseError::NotOperator(token.clone())),
-                })?;
+        let operator = tokens
+            .peek()
+            // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
+            .ok_or(ParseError::Eof)
+            // エラーを返すかもしれない値をつなげる
+            .and_then(|token| match token.value {
+                TokenKind::Equal => Ok(EqOp::equal(token.loc.clone())),
+                TokenKind::Unequal => Ok(EqOp::unequal(token.loc.clone())),
+                _ => Err(ParseError::NotOperator(token.clone())),
+            })?;
 
-            tokens.next();
+        tokens.next();
 
-            Ok(operator)
-        }
-
-        parse_left_relop(tokens, parse_expr1, parse_expr_equality_op)
-
+        Ok(operator)
     }
+
+    parse_left_eqop(tokens, parse_expr1, parse_expr_equality_op)
+}
+
+// fn parse_relational() {}
 
 fn parse_left_binop<Tokens>(
     tokens: &mut Peekable<Tokens>,
@@ -477,6 +497,35 @@ where
                 let r = subexpr_parser(tokens)?;
                 let loc = e.loc.merge(&r.loc);
                 e = Ast::relop(operator, e, r, loc)
+            }
+            _ => break,
+        }
+    }
+    Ok(e)
+}
+
+fn parse_left_eqop<Tokens>(
+    tokens: &mut Peekable<Tokens>,
+    subexpr_parser: fn(&mut Peekable<Tokens>) -> Result<Ast, ParseError>,
+    op_parser: fn(&mut Peekable<Tokens>) -> Result<EqOp, ParseError>,
+) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    let mut e = subexpr_parser(tokens)?;
+
+    loop {
+        match tokens.peek() {
+            Some(_) => {
+                let operator = match op_parser(tokens) {
+                    Ok(op) => op,
+                    // ここでパースに失敗したのはこれ以上中置演算子がないという意味
+                    Err(_) => break,
+                };
+
+                let r = subexpr_parser(tokens)?;
+                let loc = e.loc.merge(&r.loc);
+                e = Ast::eqop(operator, e, r, loc)
             }
             _ => break,
         }
