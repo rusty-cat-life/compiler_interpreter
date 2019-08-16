@@ -45,6 +45,8 @@ pub enum TokenKind {
     LParen,
     /// )
     RParen,
+    /// !
+    Negative,
     /// void type
     Void,
     /// char type
@@ -101,6 +103,7 @@ impl fmt::Display for TokenKind {
             Slash => write!(f, "/"),
             LParen => write!(f, "("),
             RParen => write!(f, ")"),
+            Negative => write!(f, "!"),
             Equal => write!(f, "=="),
             Unequal => write!(f, "!="),
             Greater => write!(f, ">"),
@@ -155,6 +158,10 @@ impl Token {
 
     pub fn rparen(loc: Loc) -> Self {
         Self::new(TokenKind::RParen, loc)
+    }
+
+    pub fn negative(loc: Loc) -> Self {
+        Self::new(TokenKind::Negative, loc)
     }
 
     pub fn equal(loc: Loc) -> Self {
