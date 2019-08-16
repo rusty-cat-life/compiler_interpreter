@@ -102,8 +102,8 @@ fn lex_assign_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError
 
 fn lex_unequal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     let start = pos;
-    let end = recognize_many(input, start, |b| b"!".contains(&b))
-        + recognize_many(input, start, |b| b"=".contains(&b));
+    let end = recognize_many(input, start, |b| b"!".contains(&b));
+    let end = recognize_many(input, end, |b| b"=".contains(&b));
 
     if end - start == 2 {
         Ok((Token::unequal(Loc(start, end)), end))
@@ -227,6 +227,18 @@ fn test_lexer4() {
             Token::number(10, Loc(0, 2)),
             Token::equal(Loc(3, 5)),
             Token::number(20, Loc(6, 8)),
+        ])
+    )
+}
+
+#[test]
+fn text_lexer5() {
+    assert_eq!(
+        lex("999 != 1000"),
+        Ok(vec![
+            Token::number(999, Loc(0, 3)),
+            Token::unequal(Loc(4, 6)),
+            Token::number(1000, Loc(7, 11))
         ])
     )
 }
