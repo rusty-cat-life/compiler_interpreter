@@ -94,10 +94,13 @@ fn lex_assign_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError
     let end = recognize_many(input, start, |b| b"=".contains(&b));
 
     if end - start == 1 {
-        Ok((Token::assign(Loc(start, end)), end))
-    } else {
-        Ok((Token::equal(Loc(start, end)), end))
+        return Ok((Token::assign(Loc(start, end)), end));
     }
+    if end - start == 2 {
+        return Ok((Token::equal(Loc(start, end)), end));
+    }
+
+    Err(LexError::invalid_char(input[end] as char, Loc(start, end)))
 }
 
 fn lex_negative_unequal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
