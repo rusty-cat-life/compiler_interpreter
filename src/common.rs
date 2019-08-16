@@ -161,6 +161,10 @@ impl Token {
         Self::new(TokenKind::Equal, loc)
     }
 
+    pub fn unequal(loc: Loc) -> Self {
+        Self::new(TokenKind::Unequal, loc)
+    }
+
     pub fn void(loc: Loc) -> Self {
         Self::new(TokenKind::Void, loc)
     }

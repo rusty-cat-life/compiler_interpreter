@@ -27,6 +27,7 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'(' => lex_a_token!(lex_lparen(input, position)),
             b')' => lex_a_token!(lex_rparen(input, position)),
             b'=' => lex_a_token!(lex_assign_equal(input, position)),
+            b'!' => lex_a_token!(lex_unequal(input, position)),
             b';' => lex_a_token!(lex_semicolon(input, position)),
             b'a'...b'z' => lex_a_token!(lex_str(input, position)),
             b' ' | b'\n' | b'\t' => {
@@ -96,6 +97,18 @@ fn lex_assign_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError
         Ok((Token::assign(Loc(start, end)), end))
     } else {
         Ok((Token::equal(Loc(start, end)), end))
+    }
+}
+
+fn lex_unequal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"!".contains(&b))
+        + recognize_many(input, start, |b| b"=".contains(&b));
+
+    if end - start == 2 {
+        Ok((Token::unequal(Loc(start, end)), end))
+    } else {
+        Err(LexError::invalid_char(input[end] as char, Loc(start, end)))
     }
 }
 
