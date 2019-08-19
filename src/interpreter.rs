@@ -13,6 +13,7 @@ impl Interpreter {
 
         match expr.value {
             Num(n) => Ok(n as i64),
+            Boolean(_) => unimplemented!(),
             UniOp { ref op, ref e } => {
                 let e = self.eval(e)?;
                 Ok(self.eval_uniop(op, e))

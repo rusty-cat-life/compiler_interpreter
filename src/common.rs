@@ -270,6 +270,8 @@ impl std::error::Error for LexError {}
 pub enum AstKind {
     /// 数値
     Num(u64),
+    /// 真偽値
+    Boolean(bool),
     /// 単項演算
     UniOp { op: UniOp, e: Box<Ast> },
     /// 二項演算
@@ -599,3 +601,8 @@ pub enum InterpreterErrorKind {
 }
 
 pub type InterpreterError = Annot<InterpreterErrorKind>;
+
+pub enum InterpreterOutputKind {
+    Int(i64),
+    Boolean(bool)
+}

@@ -429,7 +429,7 @@ where
         Some(t) => return Err(ParseError::UnexpectedToken(t)),
         _ => unreachable!(),
     };
-    let body = parse_expr(tokens)?;
+    let body = expr_equality(tokens)?;
     let loc_end = match tokens.next() {
         Some(Token {
             value: TokenKind::Semicolon,
@@ -471,10 +471,36 @@ where
         Ok(operator)
     }
 
-    parse_left_eqop(tokens, parse_expr1, parse_expr_equality_op)
+    parse_left_eqop(tokens, parse_relational, parse_expr_equality_op)
 }
 
-// fn parse_relational() {}
+fn parse_relational<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>, {
+        fn parse_expr_relational_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<RelOp, ParseError>
+        where
+            Tokens: Iterator<Item = Token>,
+        {
+            let operator = tokens
+                            .peek()
+                            // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
+                            .ok_or(ParseError::Eof)
+                            // エラーを返すかもしれない値をつなげる
+                            .and_then(|token| match token.value {
+                                TokenKind::Greater => Ok(RelOp::greater(token.loc.clone())),
+                                TokenKind::GreaterEqual => Ok(RelOp::greater_equal(token.loc.clone())),
+                                TokenKind::Less => Ok(RelOp::less(token.loc.clone())),
+                                TokenKind::LessEqual => Ok(RelOp::less_equal(token.loc.clone())),
+                                _ => Err(ParseError::NotOperator(token.clone())),
+                            })?;
+
+            tokens.next();
+
+            Ok(operator)
+        }
+
+        parse_left_relop(tokens, parse_expr1, parse_expr_relational_op)
+}
 
 fn parse_left_binop<Tokens>(
     tokens: &mut Peekable<Tokens>,
