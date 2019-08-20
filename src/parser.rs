@@ -476,30 +476,31 @@ where
 
 fn parse_relational<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
-    Tokens: Iterator<Item = Token>, {
-        fn parse_expr_relational_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<RelOp, ParseError>
-        where
-            Tokens: Iterator<Item = Token>,
-        {
-            let operator = tokens
-                            .peek()
-                            // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
-                            .ok_or(ParseError::Eof)
-                            // エラーを返すかもしれない値をつなげる
-                            .and_then(|token| match token.value {
-                                TokenKind::Greater => Ok(RelOp::greater(token.loc.clone())),
-                                TokenKind::GreaterEqual => Ok(RelOp::greater_equal(token.loc.clone())),
-                                TokenKind::Less => Ok(RelOp::less(token.loc.clone())),
-                                TokenKind::LessEqual => Ok(RelOp::less_equal(token.loc.clone())),
-                                _ => Err(ParseError::NotOperator(token.clone())),
-                            })?;
+    Tokens: Iterator<Item = Token>,
+{
+    fn parse_expr_relational_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<RelOp, ParseError>
+    where
+        Tokens: Iterator<Item = Token>,
+    {
+        let operator = tokens
+            .peek()
+            // イテレータの終わりは入力の終端なのでエラーを出す(Option -> Result)
+            .ok_or(ParseError::Eof)
+            // エラーを返すかもしれない値をつなげる
+            .and_then(|token| match token.value {
+                TokenKind::Greater => Ok(RelOp::greater(token.loc.clone())),
+                TokenKind::GreaterEqual => Ok(RelOp::greater_equal(token.loc.clone())),
+                TokenKind::Less => Ok(RelOp::less(token.loc.clone())),
+                TokenKind::LessEqual => Ok(RelOp::less_equal(token.loc.clone())),
+                _ => Err(ParseError::NotOperator(token.clone())),
+            })?;
 
-            tokens.next();
+        tokens.next();
 
-            Ok(operator)
-        }
+        Ok(operator)
+    }
 
-        parse_left_relop(tokens, parse_expr1, parse_expr_relational_op)
+    parse_left_relop(tokens, parse_expr1, parse_expr_relational_op)
 }
 
 fn parse_left_binop<Tokens>(
@@ -643,6 +644,33 @@ fn test_parser2() {
             "x".to_string(),
             Ast::num(1, Loc(8, 9)),
             Loc(0, 10)
+        ))
+    )
+}
+
+#[test]
+fn test_parser3() {
+    // int hoge = 10 == 20;
+    let ast = parse(vec![
+        Token::int(Loc(0, 3)),
+        Token::string("hoge", Loc(4, 8)),
+        Token::assign(Loc(9, 10)),
+        Token::number(10, Loc(11, 13)),
+        Token::equal(Loc(14, 16)),
+        Token::number(20, Loc(17, 19)),
+        Token::semicolon(Loc(19, 20)),
+    ]);
+    assert_eq!(
+        ast,
+        Ok(Ast::int(
+            "hoge".to_string(),
+            Ast::eqop(
+                EqOp::equal(Loc(14, 16)),
+                Ast::num(10, Loc(11, 13)),
+                Ast::num(20, Loc(17, 19)),
+                Loc(11, 19)
+            ),
+            Loc(0, 20)
         ))
     )
 }
