@@ -152,6 +152,7 @@ fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     match s {
         "void" => Ok((Token::void(Loc(start, end)), end)),
         "char" => Ok((Token::char(Loc(start, end)), end)),
+        "bool" => Ok((Token::bool(Loc(start, end)), end)),
         "int" => Ok((Token::int(Loc(start, end)), end)),
         "float" => Ok((Token::float(Loc(start, end)), end)),
         "double" => Ok((Token::double(Loc(start, end)), end)),
@@ -401,6 +402,7 @@ where
     match tokens.peek().map(|token| token.value.clone()) {
         Some(TokenKind::Int) => parse_stmt1(tokens, TokenKind::Int),
         Some(TokenKind::Char) => parse_stmt1(tokens, TokenKind::Char),
+        Some(TokenKind::Bool) => parse_stmt1(tokens, TokenKind::Bool),
         _ => parse_expr3(tokens),
     }
 }
@@ -443,6 +445,7 @@ where
     match kind {
         TokenKind::Int => Ok(Ast::int(var, body, loc)),
         TokenKind::Char => Ok(Ast::char(var, body, loc)),
+        TokenKind::Bool => Ok(Ast::bool(var, body, loc)),
         _ => unimplemented!(),
     }
 }
@@ -650,27 +653,27 @@ fn test_parser2() {
 
 #[test]
 fn test_parser3() {
-    // int hoge = 10 == 20;
+    // bool hoge = 10 == 20;
     let ast = parse(vec![
-        Token::int(Loc(0, 3)),
-        Token::string("hoge", Loc(4, 8)),
-        Token::assign(Loc(9, 10)),
-        Token::number(10, Loc(11, 13)),
-        Token::equal(Loc(14, 16)),
-        Token::number(20, Loc(17, 19)),
-        Token::semicolon(Loc(19, 20)),
+        Token::bool(Loc(0, 4)),
+        Token::string("hoge", Loc(5, 9)),
+        Token::assign(Loc(10, 11)),
+        Token::number(10, Loc(12, 14)),
+        Token::equal(Loc(15, 17)),
+        Token::number(20, Loc(18, 20)),
+        Token::semicolon(Loc(20, 21)),
     ]);
     assert_eq!(
         ast,
-        Ok(Ast::int(
+        Ok(Ast::bool(
             "hoge".to_string(),
             Ast::eqop(
-                EqOp::equal(Loc(14, 16)),
-                Ast::num(10, Loc(11, 13)),
-                Ast::num(20, Loc(17, 19)),
-                Loc(11, 19)
+                EqOp::equal(Loc(15, 17)),
+                Ast::num(10, Loc(12, 14)),
+                Ast::num(20, Loc(18, 20)),
+                Loc(12, 20)
             ),
-            Loc(0, 20)
+            Loc(0, 21)
         ))
     )
 }

@@ -51,6 +51,8 @@ pub enum TokenKind {
     Void,
     /// char type
     Char,
+    /// bool type
+    Bool,
     /// int type
     Int,
     /// float type
@@ -112,6 +114,7 @@ impl fmt::Display for TokenKind {
             LessEqual => write!(f, "<="),
             Void => write!(f, "Void"),
             Char => write!(f, "Char"),
+            Bool => write!(f, "Bool"),
             Int => write!(f, "Int"),
             Float => write!(f, "Float"),
             Double => write!(f, "Double"),
@@ -172,12 +175,32 @@ impl Token {
         Self::new(TokenKind::Unequal, loc)
     }
 
+    pub fn greater(loc: Loc) -> Self {
+        Self::new(TokenKind::Greater, loc)
+    }
+
+    pub fn greater_equal(loc: Loc) -> Self {
+        Self::new(TokenKind::GreaterEqual, loc)
+    }
+
+    pub fn less(loc: Loc) -> Self {
+        Self::new(TokenKind::Less, loc)
+    }
+
+    pub fn less_equal(loc: Loc) -> Self {
+        Self::new(TokenKind::LessEqual, loc)
+    }
+
     pub fn void(loc: Loc) -> Self {
         Self::new(TokenKind::Void, loc)
     }
 
     pub fn char(loc: Loc) -> Self {
         Self::new(TokenKind::Char, loc)
+    }
+
+    pub fn bool(loc: Loc) -> Self {
+        Self::new(TokenKind::Bool, loc)
     }
 
     pub fn int(loc: Loc) -> Self {
@@ -282,6 +305,8 @@ pub enum AstKind {
     RelOp { op: RelOp, l: Box<Ast>, r: Box<Ast> },
     /// Int
     Int { var: String, body: Box<Ast> },
+    /// Bool
+    Bool { var: String, body: Box<Ast> },
     /// 変数
     Var(String),
     /// Char
@@ -339,6 +364,16 @@ impl Ast {
         Self::new(
             AstKind::Int {
                 var,
+                body: Box::new(body),
+            },
+            loc,
+        )
+    }
+
+    pub fn bool(var: String, body: Ast, loc: Loc) -> Self {
+        Self::new(
+            AstKind::Bool {
+                var, 
                 body: Box::new(body),
             },
             loc,
@@ -604,5 +639,5 @@ pub type InterpreterError = Annot<InterpreterErrorKind>;
 
 pub enum InterpreterOutputKind {
     Int(i64),
-    Boolean(bool)
+    Boolean(bool),
 }

@@ -12,8 +12,10 @@ impl Interpreter {
         use super::common::AstKind::*;
 
         match expr.value {
+            // values
             Num(n) => Ok(n as i64),
             Boolean(_) => unimplemented!(),
+            // operators
             UniOp { ref op, ref e } => {
                 let e = self.eval(e)?;
                 Ok(self.eval_uniop(op, e))
@@ -38,18 +40,19 @@ impl Interpreter {
                 ref l,
                 ref r,
             } => unimplemented!(),
+            // variables
             Int { ref var, ref body } => {
                 let e = self.eval(body)?;
                 self.0.insert(var.clone(), e);
                 Ok(0)
             }
+            Bool { ref var, ref body } => unimplemented!(),
             Var(ref s) => self.0.get(s).cloned().ok_or(InterpreterError::new(
                 InterpreterErrorKind::UnboundVariable(s.clone()),
                 expr.loc.clone(),
             )),
             Char { ref var, ref body } => unimplemented!(),
             CharLiteral(ref c) => unimplemented!(),
-            
         }
     }
 
