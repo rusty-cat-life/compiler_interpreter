@@ -26,6 +26,8 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'/' => lex_a_token!(lex_slash(input, position)),
             b'(' => lex_a_token!(lex_lparen(input, position)),
             b')' => lex_a_token!(lex_rparen(input, position)),
+            b'>' => lex_a_token!(lex_greater_greater_equal(input, position)),
+            b'<' => lex_a_token!(lex_less_less_equal(input, position)),
             b'=' => lex_a_token!(lex_assign_equal(input, position)),
             b'!' => lex_a_token!(lex_negative_unequal(input, position)),
             b';' => lex_a_token!(lex_semicolon(input, position)),
@@ -87,6 +89,34 @@ fn lex_lparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
 
 fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b')').map(|(_, end)| (Token::rparen(Loc(start, end)), end))
+}
+
+fn lex_greater_greater_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    let start = pos;
+    let end = recognize_many(input, start, |b| b">".contains(&b));
+    let end = recognize_many(input, end, |b| b"=".contains(&b));
+
+    if end - start == 1 {
+        return Ok((Token::greater(Loc(start, end)), end));
+    }
+    if end - start == 2 {
+        return Ok((Token::greater_equal(Loc(start, end)), end));
+    }
+    Err(LexError::invalid_char(input[end] as char, Loc(start, end)))
+}
+
+fn lex_less_less_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"<".contains(&b));
+    let end = recognize_many(input, end, |b| b"=".contains(&b));
+
+    if end - start == 1 {
+        return Ok((Token::less(Loc(start, end)), end));
+    }
+    if end - start == 2 {
+        return Ok((Token::less_equal(Loc(start, end)), end));
+    }
+    Err(LexError::invalid_char(input[end] as char, Loc(start, end)))
 }
 
 fn lex_assign_equal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
@@ -258,13 +288,6 @@ pub fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
         Some(token) => Err(ParseError::RedundantExpression(token)),
         None => Ok(result),
     }
-}
-
-fn parse_expr<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
-where
-    Tokens: Iterator<Item = Token>,
-{
-    parse_expr3(tokens)
 }
 
 fn parse_expr3<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
@@ -561,6 +584,7 @@ where
             _ => break,
         }
     }
+
     Ok(e)
 }
 
