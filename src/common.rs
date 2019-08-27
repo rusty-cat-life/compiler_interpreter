@@ -361,23 +361,29 @@ impl Ast {
     }
 
     pub fn int(var: String, body: Ast, loc: Loc) -> Self {
-        Self::new(
-            AstKind::Int {
-                var,
-                body: Box::new(body),
-            },
-            loc,
-        )
+        match body.value {
+            AstKind::Num(_) => Self::new(
+                AstKind::Int {
+                    var,
+                    body: Box::new(body),
+                },
+                loc,
+            ),
+            _ => unimplemented!(),
+        }
     }
 
     pub fn bool(var: String, body: Ast, loc: Loc) -> Self {
-        Self::new(
-            AstKind::Bool {
-                var, 
-                body: Box::new(body),
-            },
-            loc,
-        )
+        match body.value {
+            AstKind::Boolean(_) => Self::new(
+                AstKind::Bool {
+                    var,
+                    body: Box::new(body),
+                },
+                loc,
+            ),
+            _ => unimplemented!(),
+        }
     }
 
     pub fn var(s: String, loc: Loc) -> Self {
