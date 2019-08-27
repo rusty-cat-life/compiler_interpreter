@@ -89,6 +89,8 @@ pub enum TokenKind {
     Less,
     /// <=
     LessEqual,
+    /// return
+    Return,
     /// charリテラル
     CharLiteral(char),
 }
@@ -127,6 +129,7 @@ impl fmt::Display for TokenKind {
             Assign => write!(f, "="),
             Semicolon => write!(f, ";"),
             r#String(s) => write!(f, "String: {}", s),
+            Return => write!(f, "Return"),
             CharLiteral(c) => write!(f, "Char Literal: {}", c),
         }
     }
@@ -251,6 +254,10 @@ impl Token {
         Self::new(TokenKind::r#String(s.into()), loc)
     }
 
+    pub fn r#return(loc: Loc) -> Self {
+        Self::new(TokenKind::Return, loc)
+    }
+
     pub fn char_literal(c: char, loc: Loc) -> Self {
         Self::new(TokenKind::CharLiteral(c), loc)
     }
@@ -309,6 +316,8 @@ pub enum AstKind {
     Bool { var: String, body: Box<Ast> },
     /// 変数
     Var(String),
+    /// Return
+    Return(Box<Ast>),
     /// Char
     Char { var: String, body: Box<Ast> },
     /// Char Literal
@@ -392,6 +401,10 @@ impl Ast {
             },
             loc,
         )
+    }
+
+    pub fn r#return(body: Ast, loc: Loc) -> Self {
+        Self::new(AstKind::Return(Box::new(body)), loc)
     }
 }
 

@@ -426,6 +426,7 @@ where
         Some(TokenKind::Int) => parse_stmt1(tokens, TokenKind::Int),
         Some(TokenKind::Char) => parse_stmt1(tokens, TokenKind::Char),
         Some(TokenKind::Bool) => parse_stmt1(tokens, TokenKind::Bool),
+        Some(TokenKind::Return) => 
         _ => parse_expr3(tokens),
     }
 }
@@ -471,6 +472,40 @@ where
         TokenKind::Bool => Ok(Ast::bool(var, body, loc)),
         _ => unimplemented!(),
     }
+}
+
+fn parse_stmt_return<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    let loc_start = match tokens.next() {
+        Some(Token { loc, .. }) => loc,
+        _ => unreachable!(),
+    };
+
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::Return,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    let body = expr_equality(tokens)?;
+
+    let loc_end = match tokens.next() {
+        Some(Token {
+            value: TokenKind::Semicolon,
+            loc,
+        }) => loc,
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    let loc = loc_start.merge(&loc_end);
+
+    Ok(Ast::r#return(body, loc))
 }
 
 fn expr_equality<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
