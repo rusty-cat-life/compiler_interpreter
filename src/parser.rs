@@ -192,6 +192,7 @@ fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
         "unsigned" => Ok((Token::unsigned(Loc(start, end)), end)),
         "signed" => Ok((Token::signed(Loc(start, end)), end)),
         "long" => Ok((Token::long(Loc(start, end)), end)),
+        "return" => Ok((Token::r#return(Loc(start, end)), end)),
         _ => Ok((Token::string(s, Loc(start, end)), end)),
     }
 }
@@ -268,13 +269,25 @@ fn test_lexer4() {
 }
 
 #[test]
-fn text_lexer5() {
+fn test_lexer5() {
     assert_eq!(
         lex("999 != 1000"),
         Ok(vec![
             Token::number(999, Loc(0, 3)),
             Token::unequal(Loc(4, 6)),
             Token::number(1000, Loc(7, 11))
+        ])
+    )
+}
+
+#[test]
+fn test_lexer6() {
+    assert_eq!(
+        lex("return 100;"),
+        Ok(vec![
+            Token::r#return(Loc(0, 6)),
+            Token::number(100, Loc(7, 10)),
+            Token::semicolon(Loc(10, 11))
         ])
     )
 }
@@ -426,7 +439,7 @@ where
         Some(TokenKind::Int) => parse_stmt1(tokens, TokenKind::Int),
         Some(TokenKind::Char) => parse_stmt1(tokens, TokenKind::Char),
         Some(TokenKind::Bool) => parse_stmt1(tokens, TokenKind::Bool),
-        Some(TokenKind::Return) => 
+        Some(TokenKind::Return) => parse_stmt_return(tokens),
         _ => parse_expr3(tokens),
     }
 }

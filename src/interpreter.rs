@@ -53,6 +53,7 @@ impl Interpreter {
             )),
             Char { ref var, ref body } => unimplemented!(),
             CharLiteral(ref c) => unimplemented!(),
+            Return(ref body) => unimplemented!(),
         }
     }
 
