@@ -41,7 +41,7 @@ pub enum TokenKind {
     Asterisk,
     /// /
     Slash,
-    /// ()
+    /// (
     LParen,
     /// )
     RParen,

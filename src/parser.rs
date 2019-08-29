@@ -507,6 +507,8 @@ where
 
     let body = expr_equality(tokens)?;
 
+    println!("{:?}", body);
+
     let loc_end = match tokens.next() {
         Some(Token {
             value: TokenKind::Semicolon,
