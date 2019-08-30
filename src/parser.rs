@@ -496,18 +496,7 @@ where
         _ => unreachable!(),
     };
 
-    match tokens.next() {
-        Some(Token {
-            value: TokenKind::Return,
-            ..
-        }) => (),
-        Some(t) => return Err(ParseError::UnexpectedToken(t)),
-        _ => unreachable!(),
-    };
-
     let body = expr_equality(tokens)?;
-
-    println!("{:?}", body);
 
     let loc_end = match tokens.next() {
         Some(Token {
