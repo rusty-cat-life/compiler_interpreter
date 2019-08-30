@@ -565,7 +565,7 @@ where
         Ok(operator)
     }
 
-    parse_left_relop(tokens, parse_expr1, parse_expr_relational_op)
+    parse_left_relop(tokens, parse_expr3, parse_expr_relational_op)
 }
 
 fn parse_left_binop<Tokens>(
