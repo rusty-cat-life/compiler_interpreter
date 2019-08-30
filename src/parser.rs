@@ -193,6 +193,8 @@ fn lex_str(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
         "signed" => Ok((Token::signed(Loc(start, end)), end)),
         "long" => Ok((Token::long(Loc(start, end)), end)),
         "return" => Ok((Token::r#return(Loc(start, end)), end)),
+        "true" => Ok((Token::r#true(Loc(start, end)), end)),
+        "false" => Ok((Token::r#false(Loc(start, end)), end)),
         _ => Ok((Token::string(s, Loc(start, end)), end)),
     }
 }

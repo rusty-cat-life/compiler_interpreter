@@ -93,6 +93,10 @@ pub enum TokenKind {
     Return,
     /// charリテラル
     CharLiteral(char),
+    /// true
+    True,
+    /// false
+    False,
 }
 
 impl fmt::Display for TokenKind {
@@ -131,6 +135,8 @@ impl fmt::Display for TokenKind {
             r#String(s) => write!(f, "String: {}", s),
             Return => write!(f, "Return"),
             CharLiteral(c) => write!(f, "Char Literal: {}", c),
+            True => write!(f, "True"),
+            False => write!(f, "False"),
         }
     }
 }
@@ -260,6 +266,14 @@ impl Token {
 
     pub fn char_literal(c: char, loc: Loc) -> Self {
         Self::new(TokenKind::CharLiteral(c), loc)
+    }
+
+    pub fn r#true(loc: Loc) -> Self {
+        Self::new(TokenKind::True, loc)
+    }
+
+    pub fn r#false(loc: Loc) -> Self {
+        Self::new(TokenKind::False, loc)
     }
 }
 
