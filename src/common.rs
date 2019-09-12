@@ -97,6 +97,18 @@ pub enum TokenKind {
     True,
     /// false
     False,
+    /// if
+    If,
+    /// else
+    Else,
+    /// while
+    While,
+    /// for
+    For,
+    /// {
+    LBrace,
+    /// }
+    RBrace,
 }
 
 impl fmt::Display for TokenKind {
@@ -137,6 +149,12 @@ impl fmt::Display for TokenKind {
             CharLiteral(c) => write!(f, "Char Literal: {}", c),
             True => write!(f, "True"),
             False => write!(f, "False"),
+            If => write!(f, "If"),
+            Else => write!(f, "Else"),
+            While => write!(f, "While"),
+            For => write!(f, "For"),
+            LBrace => write!(f, "LBrace"),
+            RBrace => write!(f, "RBrace"),
         }
     }
 }
@@ -274,6 +292,26 @@ impl Token {
 
     pub fn r#false(loc: Loc) -> Self {
         Self::new(TokenKind::False, loc)
+    }
+
+    pub fn r#if(loc: Loc) -> Self {
+        Self::new(TokenKind::If, loc)
+    }
+
+    pub fn r#while(loc: Loc) -> Self {
+        Self::new(TokenKind::While, loc)
+    }
+
+    pub fn r#for(loc: Loc) -> Self {
+        Self::new(TokenKind::For, loc)
+    }
+
+    pub fn lbrace(loc: Loc) -> Self {
+        Self::new(TokenKind::LBrace, loc)
+    }
+
+    pub fn rbrace(loc: Loc) -> Self {
+        Self::new(TokenKind::RBrace, loc)
     }
 }
 

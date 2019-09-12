@@ -514,6 +514,60 @@ where
     Ok(Ast::r#return(body, loc))
 }
 
+fn parse_stmt_if<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+where
+    Tokens: Iterator<Item = Token>,
+{
+    let loc_start = match tokens.next() {
+        Some(Token { loc, .. }) => loc,
+        _ => unreachable!(),
+    };
+
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::LParen,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    let condition = parse_expr3(tokens);
+
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::RParen,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::LBrace,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    let if_condition = expr_equality(tokens);
+
+    match tokens.next() {
+        Some(Token {
+            value: TokenKind::RBrace,
+            ..
+        }) => (),
+        Some(t) => return Err(ParseError::UnexpectedToken(t)),
+        _ => unreachable!(),
+    };
+
+    let if_stmt = parse_stmt(tokens);
+
+    Ok()
+}
+
 fn expr_equality<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
     Tokens: Iterator<Item = Token>,
